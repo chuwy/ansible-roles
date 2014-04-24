@@ -1,0 +1,40 @@
+---
+- name: be sure git is installed
+  apt: pkg=git-core state=present
+
+- name: add group "git"
+  group: name=git
+
+- name: add user "git"
+  user: name=git group=git home=/home/git
+
+- name: add .ssh directory
+  command: chdir=/home/git mkdir .ssh creates=/home/git/.ssh
+
+- name: change ownership of git home
+  file: path=/home/git/ owner=git group=git state=directory recurse=yes
+
+- name: checkout gitolite
+  git: dest=/home/git/gitolite repo=https://github.com/sitaramc/gitolite.git 
+  sudo: yes
+  sudo_user: git
+
+- name: create bin dir for for gitolite
+  command: chdir=/home/git mkdir bin creates=/home/git/bin
+  sudo: yes
+  sudo_user: git
+
+- name: install gitolite
+  command: chdir=/home/git gitolite/install -to /home/git/bin creates=/home/git/bin/gitolite
+  sudo: yes
+  sudo_user: git
+
+- name: copy admin.pub file to /home/git
+  copy: src=admin.pub dest=/home/git mode=0755
+  sudo: yes
+  sudo_user: git
+
+- name: setup gitolite
+  command: chdir=/home/git bin/gitolite setup -pk admin.pub creates=/home/git/repositories
+  sudo: yes
+  sudo_user: git

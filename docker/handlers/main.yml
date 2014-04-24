@@ -1,0 +1,4 @@
+---
+- name: restart server
+  command: /sbin/reboot
+  sudo: yes

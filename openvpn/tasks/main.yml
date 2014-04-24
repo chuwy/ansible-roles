@@ -1,0 +1,95 @@
+---
+- name: openvpn package installed
+  apt:  pkg=openvpn state=installed update_cache=yes
+  tags: openvpn
+
+- name: iptables-persistent package installed
+  shell: export DEBIAN_FRONTEND=noninteractive && apt-get -q -y install iptables-persistent
+
+- name: easy-rsa package installed
+  apt: pkg=easy-rsa
+  when: ansible_lsb.codename == 'trusty'
+
+- name: openvpn config folders exist
+  file: path=/etc/openvpn/
+        state=directory 
+        mode=0755
+        owner=root group=root
+  tags: openvpn
+
+- name: openvpn state folders exist
+  file: path=/var/lib/openvpn 
+        state=directory 
+        mode=0750 
+        owner=root group=root
+  tags: openvpn
+
+- name: openvpn config
+  template: src=conf.j2 
+            dest=/etc/openvpn/server.conf 
+            owner=root group=root
+  notify:
+    - restart openvpn
+  tags: openvpn
+
+- copy: src=easy-rsa/keys/{{ item }} 
+        dest=/etc/openvpn/
+  with_items:
+    - "{{ openvpn.server_name }}.crt"
+    - "{{ openvpn.server_name }}.key"
+    - "{{ openvpn.server_name }}.csr"
+    - ca.crt
+    - dh1024.pem
+
+- lineinfile: dest=/etc/sysctl.conf
+              backup=yes
+              backrefs=yes
+              regexp='^#net\.ipv4\.ip_forward=1'
+              line='net.ipv4.ip_forward=1'
+              state=present
+  register: sysctl_forward
+
+- name:  get iptables rules
+  shell: iptables -n -t nat -L
+  register: iptables_nat_rules
+  always_run: yes
+ 
+- name: add NAT iptables rule
+  command: /sbin/iptables -v -t nat -A POSTROUTING -o {{ ansible_default_ipv4.interface }} -s {{ openvpn.default_address }}/24 -j SNAT --to-source {{ ansible_default_ipv4.address }}
+  when: iptables_nat_rules.stdout.find("{{ openvpn.default_address }}") == -1
+  register: iptables_nat_rule_added
+
+- name: save NAT iptables rules
+  command: service iptables-persistent save
+  when: iptables_nat_rule_added.changed
+
+- name: reboot the system
+  command: reboot
+  when: sysctl_forward.changed
+
+- name: wait for ssh to come back up
+  local_action: wait_for host={{ ansible_default_ipv4.address }} port=22 delay=120 timeout=900 state=started
+  when: sysctl_forward.changed
+
+# Client configuration. It isn't required
+- name: create client configuration directory
+  local_action: file path="~/{{ openvpn.server_name }}.vpn"
+                     state=directory 
+                     mode=0755
+  ignore_errors: yes
+  when: openvpn.generate_client_configuration
+  
+- name: create client configuration
+  local_action: template src=client.ovpn 
+                         dest="~/{{ openvpn.server_name }}.vpn"
+  ignore_errors: yes
+  when: openvpn.generate_client_configuration
+
+- local_action: copy src=easy-rsa/keys/{{ item }} 
+                     dest="~/{{ openvpn.server_name }}.vpn"
+  with_items:
+    - "{{ openvpn.client_name }}.crt"
+    - "{{ openvpn.client_name }}.key"
+    - ca.crt
+  ignore_errors: yes
+  when: openvpn.generate_client_configuration

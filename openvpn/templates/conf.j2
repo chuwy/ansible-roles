@@ -1,0 +1,20 @@
+server                  {{ openvpn.default_address }} {{ openvpn.default_mask }}
+port                    {{ openvpn.default_port }}
+dev                     tun
+proto                   udp
+user                    nobody
+group                   nogroup
+ifconfig-pool-persist   ipp.txt
+status                  openvpn-status.log
+log-append              /var/log/openvpn.log
+keepalive               10 120
+verb                    3
+mute                    10
+comp-lzo
+persist-key
+persist-tun
+
+ca   /etc/openvpn/ca.crt
+key  /etc/openvpn/{{ openvpn.server_name }}.key
+cert /etc/openvpn/{{ openvpn.server_name }}.crt
+dh   /etc/openvpn/dh1024.pem

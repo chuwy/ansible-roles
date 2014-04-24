@@ -1,0 +1,37 @@
+---
+- name: Install linux_kernel
+  when: docker_update_kernel is undefined or not docker_update_kernel
+  apt: package=linux-image-generic-lts-raring update_cache=yes state=present
+  sudo: yes
+  notify:
+  - restart server
+
+- name: Pre-repo add dependencies
+  apt: pkg={{ item }} state=latest
+  with_items:
+  - python-software-properties
+  - python-apt
+  - python-pycurl
+  - wget
+  sudo: yes
+
+- name: Add docker repository key
+  apt_key: url=https://get.docker.io/gpg state=present
+  sudo: yes
+ 
+- name: Add docker repository
+  apt_repository: repo="deb http://get.docker.io/ubuntu docker main" state=present
+  sudo: yes
+
+- name: Install docker
+  apt: pkg=lxc-docker state=latest update_cache=yes
+  sudo: yes
+  notify:
+  - restart server
+
+- name: Add {{ ansible_user_id }} to docker group
+  user: name={{ ansible_user_id }} groups=docker append=yes
+  sudo: yes
+
+- name: Install docker-py
+  pip: name=docker-py

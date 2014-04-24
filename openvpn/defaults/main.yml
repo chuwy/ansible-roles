@@ -1,0 +1,8 @@
+---
+openvpn:
+  default_address:               10.8.0.0
+  default_mask:                  255.255.255.0
+  default_port:                  1194
+  server_name:                   burrow
+  generate_client_configuration: no
+  client_name:                   client1

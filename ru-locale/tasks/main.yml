@@ -1,0 +1,10 @@
+---
+- name: set locale
+  copy: src=locale
+        dest=/etc/default/locale
+
+- name: generate locales
+  command: /usr/sbin/locale-gen en_US en_US.UTF-8 ru_RU.UTF-8
+
+- name: reconfigure locales
+  command: /usr/sbin/dpkg-reconfigure locales

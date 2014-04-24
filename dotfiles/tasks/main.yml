@@ -1,0 +1,33 @@
+---
+- name: ensure personal packages is at the latest version
+  apt: pkg={{ item }}
+       state=latest 
+  with_items:
+  - git-core
+  - vim-nox
+  - zsh
+
+- name: create boss user
+  user: name={{ boss_user }} shell=/bin/zsh
+
+- name: install virtualenvwrapper
+  pip: name=virtualenvwrapper
+
+- name: clone dotfiles
+  git: repo={{ dotfiles.remote_repo }}
+       dest=/home/{{ boss_user }}/workspace/dotfiles
+  sudo: yes
+  sudo_user: "{{ boss_user }}"
+
+- name: bootstrap dotfiles
+  shell: ./start.sh
+         executable=/bin/zsh
+         chdir=/home/{{ boss_user }}/workspace/dotfiles/
+         creates=/home/{{ boss_user }}/.zprezto
+  sudo: yes
+  sudo_user: "{{ boss_user }}"
+
+- file: path=/usr/share/terminfo/s/ owner=root group=root state=directory
+
+- name: copy terminfo   # don't know why tmux doesn't work without it
+  copy: src=screen-256color-s dest=/usr/share/terminfo/s/

@@ -1,0 +1,23 @@
+---
+- name: add nginx ppa
+  apt_repository: repo=ppa:nginx/stable
+
+- name: ensure nginx is at the latest version
+  apt: pkg=nginx
+       state=latest
+  notify:
+  - restart nginx
+
+- name: copy nginx settings
+  copy: src=nginx.conf
+        dest=/etc/nginx/nginx.conf
+
+- name: copy nginx mime types
+  copy: src=mime.types
+        dest=/etc/nginx/mime.types
+
+- name: remove default vhost
+  file: path=/etc/nginx/sites-enabled/default
+        state=absent 
+
+

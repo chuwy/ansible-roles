@@ -1,0 +1,28 @@
+---
+- name: download distribute installer
+  command: /usr/bin/wget -q http://python-distribute.org/distribute_setup.py 
+          creates=/usr/local/bin/pip
+
+- name: install distribute
+  command: /usr/bin/python distribute_setup.py 
+          creates=/usr/local/bin/pip
+
+- name: download pip installer
+  command: /usr/bin/wget -q https://raw.github.com/pypa/pip/master/contrib/get-pip.py 
+          creates=/usr/local/bin/pip
+
+- name: install pip
+  command: /usr/bin/python get-pip.py 
+          creates=/usr/local/bin/pip
+
+- name: clean installers
+  file: path={{ item }} state=absent
+  with_items:
+  - distribute_setup.py
+  - get-pip.py
+
+- name: install python-dev
+  apt: pkg=python-dev state=latest
+
+- name: install virtualenv
+  pip: name=virtualenv

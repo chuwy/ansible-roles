@@ -1,0 +1,35 @@
+---
+- name: ensure postgresql is at the latest version or install it
+  apt: pkg=postgresql
+       state=latest
+  notify:
+  - restart postgresql
+
+- name: copy script for modifing template0
+  copy: src=pg_utf.sh 
+        dest=/home/web/pg_utf.sh 
+        owner=postgres
+        group=postgres
+        mode=500
+
+- name: run script for modifing template0
+  shell: sudo -u postgres /home/web/pg_utf.sh 
+         chdir=/home/web 
+  register: postgres_template_utf
+  changed_when: postgres_template_utf.stdout == "changed"
+
+- name: copy pg_hba.conf with web peer auth
+  copy: src=pg_hba.conf
+        dest=/etc/postgresql/9.1/main/ 
+        owner=postgres 
+        group=postgres 
+        mode=640
+
+- name: copy pg_ident.conf with web peer auth
+  copy: src=pg_ident.conf 
+        dest=/etc/postgresql/9.1/main/ 
+        owner=postgres 
+        group=postgres 
+        mode=640
+  notify:
+  - restart postgresql

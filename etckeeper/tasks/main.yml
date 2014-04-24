@@ -1,0 +1,19 @@
+---
+- name: ensure packages is at the latest version
+  apt: pkg={{ item }}
+       state=latest 
+       update_cache=yes
+  with_items:
+  - git
+  - unzip
+  - wget
+  - etckeeper
+
+- name: copy etckeeper settings
+  copy: src=etckeeper.conf 
+        dest=/etc/etckeeper/etckeeper.conf
+
+- name: init etckeeper
+  command: /usr/bin/etckeeper init 
+           chdir=/etc
+           creates=/etc/.git
