@@ -1,0 +1,32 @@
+---
+- name: ensure user deluge is present
+  user: state=present name={{ deluge.deluge_user }} system=yes shell=/bin/sh comment="Deluge Torrents"
+  when: {{ deluge.create_user }}
+
+- name: add deluge ppa key
+  action: apt_repository repo=ppa:deluge-team/ppa state=present
+  notify: update apt-cache
+
+- name: install required deluge packages
+  action: apt pkg=$item state=installed
+  with_items:
+    - deluge
+    - deluged
+    - deluge-web
+
+- name: ensure deluged daemon startup script exists
+  template: src=templates/etc/init/deluged.conf.j2 dest=/etc/init/deluged.conf owner=root group=root mode=0755
+  notify: restart deluged service
+
+- name: ensure deluged webui script exists
+  template: src=templates/etc/init/deluge-web.conf.j2 dest=/etc/init/deluge-web.conf owner=root group=root mode=0755
+  notify: restart deluged-web service
+
+- name: ensure deluged daemon is started
+  service: name=deluged state=started
+
+- name: ensure deluged webui is started
+  service: name=deluge-web state=started
+
+- name: ensure log directory exists
+  file: dest=/var/log/deluge owner={{ deluge.user }} group={{ deluge.group }} mode=0750 recurse=yes state=directory

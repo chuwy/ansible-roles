@@ -1,0 +1,20 @@
+---
+deluge:
+  # By default we will create a new deluge user. I might remove this variable as it is not
+  # probably needed. If you set the deluge.user to a user that does not exist then it will
+  # create it, otherwise it will use the existing user.
+  create_user: yes
+  
+  user: deluge
+  group: deluge
+  
+  #007 grants full access to the user and members of the group deluged is running as (in this case deluge) and prevents access from all other accounts.
+  #022 grants full access to the user deluged is running as and only read access to other accounts.
+  #000 grants full access to all accounts.
+  daemon_umask: 007
+  
+  # umask 027 grants full access to uid, read access to gid and prevents access from all other accounts. 
+  # This should only affect the permissions of plugins installed through the Web UI and, if enabled, logs. 
+  # Group permissions are restricted to read-only to prevent compromised member accounts injecting malicious 
+  # code into plugins or modifying the logs.
+  web_umask: 027

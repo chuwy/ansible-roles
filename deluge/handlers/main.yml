@@ -1,0 +1,9 @@
+---
+- name: update apt-cache
+  apt: update_cache=yes
+
+- name: restart deluged service
+  service: name=deluged state=restarted
+
+- name: restart deluged-web service
+  service: name=deluge-web state=restarted
