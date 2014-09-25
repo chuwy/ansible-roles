@@ -1,9 +1,0 @@
----
-- hosts: SPECIFY_HOST!
-  remote_user: chuwy
-  sudo: yes
-  roles:
-  - etckeeper
-  - python    # pip, distribute, virtualenv
-  - dotfiles
-  - samba     # passwordless share (private)
